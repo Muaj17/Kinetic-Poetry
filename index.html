@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Does Presentation Create Meaning?</title>
+
+  <!-- Google Fonts: IM Fell English (poem text) + Cormorant Garamond (UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+  <!-- GSAP animation library — https://gsap.com/docs/v3/ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <style>
+    :root {
+      --bg:          #0e1016;
+      --text:        #e8e0d0;
+      --text-muted:  #9a9280;   
+      --text-sub:    #6e6860;   
+      --text-dim:    #3a3830;   
+      --accent:      #E8C98B;
+      --accent-dim:  rgba(232,201,139,0.07);
+      --font-poem:   'IM Fell English', Georgia, serif;
+      --font-ui:     'Cormorant Garamond', Georgia, serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 660px;
+      margin: 0 auto;
+      padding: 5rem 2rem 4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3.5rem;
+    }
+
+    /* ─── Header ─────────────────────────────────────────────────── */
+    .site-header { text-align: center; }
+
+    .site-label {
+      display: block;
+      font-size: 0.68rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.2rem;
+      opacity: 0.85;
+      transition: color 1.2s ease;
+    }
+
+    .site-title {
+      font-family: var(--font-poem);
+      font-size: clamp(1.9rem, 5vw, 2.9rem);
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 0.8rem;
+    }
+
+    .site-subtitle {
+      font-size: 0.9rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ─── Intro ──────────────────────────────────────────────────── */
+    .intro-text {
+      text-align: center;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .intro-text p {
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.75;
+      color: var(--text-muted); /* #9a9280 — readable on dark bg */
+    }
+
+    .intro-emphasis {
+      font-family: var(--font-poem) !important;
+      font-size: 1.15rem !important;
+      color: var(--text) !important;
+      font-style: italic;
+    }
+
+    .intro-small {
+      font-size: 0.9rem !important;
+      color: var(--text-muted) !important;
+    }
+
+    /* ─── Theme Badge ─────────────────────────────────────────────── */
+    .theme-badge {
+      font-size: 0.6rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0;
+      transition: color 1.2s ease;
+      min-height: 1em;
+    }
+
+    /* ─── Poem Stage ─────────────────────────────────────────────── */
+    .poem-stage {
+      width: 100%;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      padding: 2.5rem 2rem;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: var(--accent-dim);
+      transition: background 1.2s ease;
+      position: relative;
+    }
+
+    .poem-stage::before, .poem-stage::after {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      border-color: var(--accent);
+      border-style: solid;
+      opacity: 0.25;
+      transition: border-color 1.2s ease;
+    }
+    .poem-stage::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+    .poem-stage::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+    .poem-title {
+      font-family: var(--font-poem);
+      font-size: 1rem;
+      font-weight: 400;
+      font-style: italic;
+      letter-spacing: 0.12em;
+      text-transform: lowercase;
+      color: var(--accent);
+      text-align: center;
+      transition: color 1.2s ease;
+      min-height: 1.4em;
+    }
+
+    .poem-body {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .poem-line {
+      font-family: var(--font-poem);
+      font-size: clamp(1.3rem, 3.5vw, 1.75rem);
+      font-weight: 400;
+      line-height: 1.6;
+      text-align: center;
+      overflow: visible;
+    }
+
+    /*
+      display: inline-block REQUIRED for GSAP transforms (scale, x, y, rotation).
+      Transforms don't apply to inline elements.
+    */
+    .word {
+      display: inline-block;
+      will-change: transform, opacity, filter;
+    }
+
+    /* Structural words (articles, prepositions, conjunctions) are rendered dimmer */
+    .word--article,
+    .word--article_lower,
+    .word--preposition,
+    .word--conjunction { opacity: 0.5; }
+
+    /* ─── Controls ───────────────────────────────────────────────── */
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      padding: 0.85rem 2.2rem;
+    }
+
+    .btn--primary {
+      background: var(--accent);
+      color: var(--bg);
+      transition: background 1.2s ease, opacity 0.22s ease, transform 0.22s ease;
+    }
+    .btn--primary:hover  { opacity: 0.82; transform: translateY(-1px); }
+    .btn--primary:active { transform: translateY(0); }
+
+    .btn--secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: color 0.22s ease, border-color 0.22s ease;
+    }
+    .btn--secondary:hover { color: var(--text); border-color: rgba(255,255,255,0.28); }
+
+    /* ─── Legend ─────────────────────────────────────────────────── */
+    .legend {
+      width: 100%;
+      padding: 1.4rem 1.6rem;
+      border: 1px solid rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.015);
+    }
+
+    .legend-title {
+      font-size: 0.62rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--text-sub); /* visible: #6e6860 */
+      margin-bottom: 1rem;
+    }
+
+    .legend-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.7rem 2rem;
+    }
+    @media (max-width: 480px) { .legend-grid { grid-template-columns: 1fr; } }
+
+    .legend-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: var(--text-muted); /* readable */
+      line-height: 1.4;
+    }
+    .legend-item strong { font-weight: 500; color: var(--text); }
+
+    .legend-swatch {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .swatch--adj   { background: var(--accent); }
+    .swatch--noun  { background: #a8c8e8; }
+    .swatch--verb  { background: rgba(255,255,255,0.5); }
+    .swatch--other { background: rgba(255,255,255,0.18); }
+
+    /* ─── Footer ─────────────────────────────────────────────────── */
+    .site-footer { text-align: center; }
+
+    .site-footer p {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      font-weight: 300;
+      line-height: 2;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+<main class="container">
+
+  <header class="site-header">
+    <span class="site-label">kinetic poetry generator</span>
+    <h1 class="site-title">Does Presentation<br>Create Meaning?</h1>
+    <p class="site-subtitle">A digital poetics project — <em>ENG287</em></p>
+  </header>
+
+  <div id="intro" class="intro-text">
+    <p>
+      This website generates poems using rule-based grammar — the same
+      logic used by Racter — and presents them through kinetic
+      animations inspired by bpNichol's <em>First Screening</em>.
+    </p>
+    <p class="intro-emphasis">
+      The words are random.<br>The movement is not.
+    </p>
+    <p class="intro-small">
+      Watch how the poem arrives, then ask yourself:<br>
+      does it seem to mean something?
+    </p>
+  </div>
+
+  <div class="poem-stage">
+    <h2 id="poem-title" class="poem-title"></h2>
+    <p  id="theme-badge" class="theme-badge"></p>
+    <div id="poem-body" class="poem-body"></div>
+  </div>
+
+  <div class="controls">
+    <button id="btn-generate" class="btn btn--primary">Generate Poem</button>
+    <button id="btn-replay"   class="btn btn--secondary" style="visibility:hidden;">Replay</button>
+  </div>
+
+  <div class="legend" id="legend" style="opacity:0;">
+    <p class="legend-title">animation key — why words move differently</p>
+    <div class="legend-grid">
+      <div class="legend-item">
+        <span class="legend-swatch swatch--adj"></span>
+        <span><strong>adjective</strong> — scale, tilt, or elastic stretch</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch swatch--noun"></span>
+        <span><strong>noun</strong> — drifts, drops, rises, or snaps in</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch swatch--verb"></span>
+        <span><strong>verb</strong> — blur dissolve, shudder, or slow rise</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch swatch--other"></span>
+        <span><strong>articles / prepositions</strong> — appear quietly</span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <p>Poems generated via rule-based grammar · Animations via GSAP</p>
+    <p>Inspired by Racter's <em>The Policeman's Beard is Half Constructed</em> and bpNichol's <em>First Screening</em></p>
+  </footer>
+
+</main>
+
+<script>
+/* ================================================================
+   GRAMMAR
+   
+   Four themed word banks. Each poem picks a random theme, then
+   picks 3 random line templates to fill with that theme's words.
+   
+   Thematic constraint:
+   Limiting the vocabulary to a semantic domain makes poems feel
+   tonally coherent even when they are semantically nonsensical.
+   The reader senses a "world" without being able to explain it.
+   
+   Inspired by Tracery: https://tracery.io
+   Context-free grammar: https://en.wikipedia.org/wiki/Context-free_grammar
+================================================================ */
+
+const THEMES = {
+
+  // ── Memory / Light / Decay ───────────────────────────────────
+  memory: {
+    label: 'memory · light · decay',
+    noun: [
+      'shadow','mirror','tide','ember','threshold','echo','lantern','root',
+      'ash','vessel','window','current','veil','shore','silence','candle',
+      'drift','ruin','fog','thread','letter','door','key','dust','glass',
+      'smoke','rain','bone','stone','name','hour','path','wall','field','lake'
+    ],
+    adjective: [
+      'hollow','silver','ancient','pale','restless','still','luminous','frail',
+      'sunken','weathered','quiet','brittle','heavy','cold','fading','dark',
+      'distant','broken','empty','slow','lost','forgotten','warm','tender',
+      'fleeting','dim','soft','muted','thin','partial','late','deep','bare','clear','lean'
+    ],
+    verb: [
+      'forgets','dissolves','reaches','waits','drifts','traces','holds','fades',
+      'turns','lingers','crosses','meets','carries','breaks','keeps','follows',
+      'returns','remains','settles','falls','remembers','loses','finds','leaves',
+      'whispers','opens','closes','passes','moves','stays','gathers','unravels',
+      'hides','watches','aches'
+    ],
+    palettes: [
+      { accent: '#E8C98B', dim: 'rgba(232,201,139,0.07)' },
+      { accent: '#D4B896', dim: 'rgba(212,184,150,0.07)' },
+      { accent: '#C8B8A0', dim: 'rgba(200,184,160,0.07)' },
+    ]
+  },
+
+  // ── Celestial / Cosmic ───────────────────────────────────────
+  celestial: {
+    label: 'celestial · cosmic',
+    noun: [
+      'orbit','nebula','void','corona','eclipse','zenith','gravity','pulsar',
+      'comet','aurora','singularity','equinox','transit','parallax','aphelion',
+      'meridian','solstice','axis','arc','flux','node','ring','cycle','plane',
+      'field','mass','event','horizon','curvature','redshift','locus',
+      'focus','vertex','limb','penumbra'
+    ],
+    adjective: [
+      'vast','dark','cold','burning','ancient','distant','oblique','silent',
+      'infinite','curved','hollow','dense','radiant','faint','deep','slow',
+      'elliptical','dim','scattered','polar','axial','tidal','stellar','cosmic',
+      'residual','diffuse','absolute','total','terminal','apparent','true',
+      'proper','local','fixed','unbound'
+    ],
+    verb: [
+      'orbits','collapses','expands','burns','drifts','rotates','fades','pulls',
+      'scatters','aligns','crosses','falls','rises','holds','breaks','bends',
+      'circles','dims','ignites','dissolves','contracts','reflects','refracts',
+      'escapes','captures','radiates','oscillates','deflects','recedes',
+      'approaches','precesses','eclipses','occults','transits','flares'
+    ],
+    palettes: [
+      { accent: '#9BB8E8', dim: 'rgba(155,184,232,0.07)' },
+      { accent: '#C9A8E8', dim: 'rgba(201,168,232,0.07)' },
+      { accent: '#A8B8D8', dim: 'rgba(168,184,216,0.07)' },
+    ]
+  },
+
+  // ── Industrial / Urban ───────────────────────────────────────
+  industrial: {
+    label: 'industrial · urban',
+    noun: [
+      'wire','rust','scaffold','concrete','valve','fracture','signal','circuit',
+      'fuse','piston','conduit','seam','weld','gauge','anchor','girder','cable',
+      'fault','chamber','relay','junction','rail','bolt','hinge','shaft','beam',
+      'pipe','joint','grid','load','span','truss','duct','drain','frame'
+    ],
+    adjective: [
+      'cracked','bent','cold','dark','worn','blunt','raw','dense','corroded',
+      'stark','rigid','coarse','fractured','exposed','stained','hollow','burnt',
+      'severed','heavy','fixed','welded','tensioned','sheared','stressed',
+      'grounded','live','dead','open','closed','stripped','suspended',
+      'embedded','cast','drawn','load-bearing'
+    ],
+    verb: [
+      'corrodes','grinds','fractures','holds','bends','cuts','breaks','runs',
+      'stops','burns','cracks','locks','fails','seals','splits','wears','jams',
+      'leaks','strains','fuses','triggers','shorts','loops','trips','switches',
+      'loads','drives','feeds','draws','blocks','shunts','conducts','resists',
+      'grounds','carries'
+    ],
+    palettes: [
+      { accent: '#E8A86B', dim: 'rgba(232,168,107,0.07)' },
+      { accent: '#B8C8C8', dim: 'rgba(184,200,200,0.07)' },
+      { accent: '#D8B888', dim: 'rgba(216,184,136,0.07)' },
+    ]
+  },
+
+  // ── Botanical / Organic ──────────────────────────────────────
+  botanical: {
+    label: 'botanical · organic',
+    noun: [
+      'spore','tendril','pollen','bark','mycelium','filament','canopy','frond',
+      'resin','thorn','bract','rhizome','stamen','lichen','sap','seedpod',
+      'catkin','nodule','runner','bole','cambium','pistil','calyx','radicle',
+      'corona','panicle','sucker','cutting','layer','slip','gall',
+      'sporangium','internode','stipule','lobe'
+    ],
+    adjective: [
+      'green','dense','slow','wet','sharp','pale','tangled','soft','fibrous',
+      'deep','woody','hollow','dark','new','old','dry','curled','split','thin',
+      'thick','dormant','ripening','budding','wilting','spreading','layered',
+      'branched','lobed','serrated','sessile','opposite','alternate',
+      'compound','simple','stoloniferous'
+    ],
+    verb: [
+      'grows','spreads','reaches','roots','flowers','wilts','creeps','twists',
+      'opens','closes','climbs','falls','rots','seeds','blooms','breaks','bends',
+      'feeds','holds','releases','germinates','branches','absorbs','transpires',
+      'colonizes','fruits','drops','sheds','grafts','propagates',
+      'overwinters','etiolates','abscises','vernalizes','photosynthesizes'
+    ],
+    palettes: [
+      { accent: '#A8D898', dim: 'rgba(168,216,152,0.07)' },
+      { accent: '#C8D880', dim: 'rgba(200,216,128,0.07)' },
+      { accent: '#B8C8A0', dim: 'rgba(184,200,160,0.07)' },
+    ]
+  }
+
+};
+
+const THEME_KEYS = Object.keys(THEMES);
+
+// Shared structural words — same across all themes
+const SHARED = {
+  article:       ['The', 'A'],
+  article_lower: ['the', 'a'],
+  preposition:   ['into','through','beneath','beside','beyond','within','of','along','past','against'],
+  conjunction:   ['and','but','until','while','as','though','yet','since','before']
+};
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Pick n unique random items from an array
+function pickN(arr, n) {
+  const copy = [...arr];
+  const result = [];
+  for (let i = 0; i < n && copy.length; i++) {
+    const idx = Math.floor(Math.random() * copy.length);
+    result.push(copy.splice(idx, 1)[0]);
+  }
+  return result;
+}
+
+function token(role, word) {
+  return { role, word, id: 'w-' + Math.random().toString(36).slice(2, 9) };
+}
+
+/* ── Line Templates ─────────────────────────────────────────────
+   Six structural patterns. Each poem picks 3 at random.
+   Structure is fixed; words are random.
+   This is what allows deliberate animation even with random content.
+   
+   Templates A–F, each receiving merged word banks (b):          */
+
+const ALL_LINE_TEMPLATES = [
+  // A: "The [adj] [noun] [verb]" — declarative
+  (b) => [
+    token('article',   pick(b.article)),
+    token('adjective', pick(b.adjective)),
+    token('noun',      pick(b.noun)),
+    token('verb',      pick(b.verb)),
+  ],
+  // B: "[prep] the [noun] of [adj] [noun]s" — image / location
+  (b) => [
+    token('preposition',   pick(b.preposition)),
+    token('article_lower', 'the'),
+    token('noun',          pick(b.noun)),
+    token('preposition',   'of'),
+    token('adjective',     pick(b.adjective)),
+    token('noun',          pick(b.noun) + 's'),
+  ],
+  // C: "[conj] [noun] [verb] the [adj] [noun]" — resolution / turn
+  (b) => [
+    token('conjunction',   pick(b.conjunction)),
+    token('noun',          pick(b.noun)),
+    token('verb',          pick(b.verb)),
+    token('article_lower', 'the'),
+    token('adjective',     pick(b.adjective)),
+    token('noun',          pick(b.noun)),
+  ],
+  // D: "[adj] [noun] and [adj] [noun]" — pairing with no verb
+  //    Reader infers a relationship that was never declared
+  (b) => [
+    token('adjective',   pick(b.adjective)),
+    token('noun',        pick(b.noun)),
+    token('conjunction', 'and'),
+    token('adjective',   pick(b.adjective)),
+    token('noun',        pick(b.noun)),
+  ],
+  // E: "the [noun] [verb] [prep] [adj] [noun]" — action + destination
+  (b) => [
+    token('article_lower', 'the'),
+    token('noun',          pick(b.noun)),
+    token('verb',          pick(b.verb)),
+    token('preposition',   pick(b.preposition)),
+    token('adjective',     pick(b.adjective)),
+    token('noun',          pick(b.noun)),
+  ],
+  // F: "[verb] the [adj] [noun]" — short imperative / command
+  (b) => [
+    token('verb',          pick(b.verb)),
+    token('article_lower', 'the'),
+    token('adjective',     pick(b.adjective)),
+    token('noun',          pick(b.noun)),
+  ],
+];
+
+const TITLE_TEMPLATES = [
+  (b) => `${pick(b.adjective)} ${pick(b.noun)}`,
+  (b) => `the ${pick(b.noun)} ${pick(b.verb)}`,
+  (b) => `${pick(b.noun)} and ${pick(b.noun)}`,
+  (b) => `${pick(b.adjective)} ${pick(b.noun)} in ${pick(b.noun)}`,
+  (b) => `${pick(b.verb)} the ${pick(b.noun)}`,
+  (b) => `${pick(b.noun)}, ${pick(b.adjective)}`,
+];
+
+function generatePoem() {
+  const themeKey = pick(THEME_KEYS);
+  const theme    = THEMES[themeKey];
+  const banks    = { ...theme, ...SHARED };
+  const templates = pickN(ALL_LINE_TEMPLATES, 3);
+  return {
+    title:      pick(TITLE_TEMPLATES)(banks),
+    themeLabel: theme.label,
+    palette:    pick(theme.palettes),
+    lines:      templates.map(t => t(banks))
+  };
+}
+
+
+/* ================================================================
+   ANIMATION
+   
+   GSAP docs:        https://gsap.com/docs/v3/
+   fromTo():         https://gsap.com/docs/v3/GSAP/gsap.fromTo/
+   Eases:            https://gsap.com/docs/v3/Eases/
+   Timeline:         https://gsap.com/docs/v3/GSAP/Timeline/
+   
+   ROLE → ANIMATION POOL (randomly selected per word):
+   
+   adjective   [3 options] → scale-pulse, tilt-rotation, elastic-stretch
+   noun        [4 options] → side-drift, gravity-drop, rise-up, elastic-scale
+   verb        [3 options] → blur-dissolve, shudder, slow-drift-up
+   structural  [2 options] → quick-fade, fade-with-scale
+   
+   Random selection per word means no two poems look identical,
+   even poems with the same structure and similar words.
+================================================================ */
+
+let currentPalette = { accent: '#E8C98B', dim: 'rgba(232,201,139,0.07)' };
+let nounIndex = 0;
+
+function applyPalette(p) {
+  currentPalette = p;
+  document.documentElement.style.setProperty('--accent', p.accent);
+  document.documentElement.style.setProperty('--accent-dim', p.dim);
+}
+
+/* ── Adjective Animations ───────────────────────────────────────── */
+
+function adj_scalePulse(span, delay) {
+  // Scales up with accent colour, settles to normal — manufactured emphasis
+  gsap.fromTo(span,
+    { opacity: 0, scale: 0.5, color: currentPalette.accent },
+    {
+      opacity: 1, scale: 1.22, color: currentPalette.accent,
+      duration: 0.45, delay, ease: 'back.out(1.4)',
+      onComplete: () => gsap.to(span, { scale: 1, color: '#e8e0d0', duration: 0.4, ease: 'power1.inOut' })
+    }
+  );
+}
+
+function adj_tiltRotation(span, delay) {
+  // Comes in tilted, straightens — word arrives off-balance then corrects
+  gsap.fromTo(span,
+    { opacity: 0, rotation: 16, scale: 0.7, y: 8, color: currentPalette.accent },
+    {
+      opacity: 1, rotation: 0, scale: 1, y: 0, color: currentPalette.accent,
+      duration: 0.6, delay, ease: 'power3.out',
+      onComplete: () => gsap.to(span, { color: '#e8e0d0', duration: 0.5 })
+    }
+  );
+}
+
+function adj_elasticStretch(span, delay) {
+  // Squashed wide and flat, snaps to normal — like a rubber word
+  gsap.fromTo(span,
+    { opacity: 0, scaleX: 2.4, scaleY: 0.35, color: currentPalette.accent },
+    {
+      opacity: 1, scaleX: 1, scaleY: 1, color: currentPalette.accent,
+      duration: 0.65, delay, ease: 'elastic.out(1, 0.45)',
+      onComplete: () => gsap.to(span, { color: '#e8e0d0', duration: 0.4 })
+    }
+  );
+}
+
+/* ── Noun Animations ────────────────────────────────────────────── */
+
+function noun_sideDrift(span, delay) {
+  // Alternating left/right — implies a spatial relationship between things
+  const fromX = nounIndex % 2 === 0 ? -42 : 42;
+  gsap.fromTo(span,
+    { opacity: 0, x: fromX },
+    { opacity: 1, x: 0, duration: 0.68, delay, ease: 'power3.out' }
+  );
+}
+
+function noun_gravityDrop(span, delay) {
+  // Falls from above with a bounce — gives nouns weight and arrival
+  gsap.fromTo(span,
+    { opacity: 0, y: -50 },
+    { opacity: 1, y: 0, duration: 0.75, delay, ease: 'bounce.out' }
+  );
+}
+
+function noun_riseUp(span, delay) {
+  // Rises from below — emergence, surfacing
+  gsap.fromTo(span,
+    { opacity: 0, y: 38 },
+    { opacity: 1, y: 0, duration: 0.65, delay, ease: 'power2.out' }
+  );
+}
+
+function noun_elasticScale(span, delay) {
+  // Scales in from nothing with elastic snap — sudden, definite presence
+  gsap.fromTo(span,
+    { opacity: 0, scale: 0 },
+    { opacity: 1, scale: 1, duration: 0.7, delay, ease: 'elastic.out(1, 0.55)' }
+  );
+}
+
+/* ── Verb Animations ────────────────────────────────────────────── */
+
+function verb_blurDissolve(span, delay) {
+  // Clears from blur — action coming into focus, like a memory resolving
+  gsap.fromTo(span,
+    { opacity: 0, filter: 'blur(9px)' },
+    { opacity: 1, filter: 'blur(0px)', duration: 0.92, delay, ease: 'power1.inOut' }
+  );
+}
+
+function verb_shudder(span, delay) {
+  // Vibrates then settles — suggests effort, tension, or struggle
+  // Uses GSAP timeline to chain rapid small x-movements
+  // https://gsap.com/docs/v3/GSAP/Timeline/
+  gsap.set(span, { opacity: 0 });
+  const tl = gsap.timeline({ delay });
+  tl.to(span, { opacity: 1, duration: 0.1 })
+    .to(span, { x: -5, duration: 0.05 })
+    .to(span, { x:  5, duration: 0.05 })
+    .to(span, { x: -4, duration: 0.05 })
+    .to(span, { x:  4, duration: 0.05 })
+    .to(span, { x: -2, duration: 0.04 })
+    .to(span, { x:  0, duration: 0.14, ease: 'power2.out' });
+}
+
+function verb_slowDriftUp(span, delay) {
+  // Drifts upward while fading in — action lifting, ascending slowly
+  gsap.fromTo(span,
+    { opacity: 0, y: 24 },
+    { opacity: 1, y: 0, duration: 1.05, delay, ease: 'power2.out' }
+  );
+}
+
+/* ── Structural Animations ──────────────────────────────────────── */
+
+function structural_quickFade(span, delay) {
+  gsap.fromTo(span, { opacity: 0 }, { opacity: 0.5, duration: 0.22, delay, ease: 'none' });
+}
+
+function structural_fadeScale(span, delay) {
+  gsap.fromTo(span,
+    { opacity: 0, scale: 0.78 },
+    { opacity: 0.5, scale: 1, duration: 0.3, delay, ease: 'power1.out' }
+  );
+}
+
+/* ── Dispatcher: randomly assigns animation variant per word ────── */
+function animateWord(span, role, delay) {
+  const r = Math.random();
+  switch (role) {
+    case 'adjective':
+      if      (r < 0.34) adj_scalePulse(span, delay);
+      else if (r < 0.67) adj_tiltRotation(span, delay);
+      else               adj_elasticStretch(span, delay);
+      break;
+    case 'noun':
+      if      (r < 0.30) noun_sideDrift(span, delay);
+      else if (r < 0.55) noun_gravityDrop(span, delay);
+      else if (r < 0.78) noun_riseUp(span, delay);
+      else               noun_elasticScale(span, delay);
+      nounIndex++;
+      break;
+    case 'verb':
+      if      (r < 0.38) verb_blurDissolve(span, delay);
+      else if (r < 0.70) verb_shudder(span, delay);
+      else               verb_slowDriftUp(span, delay);
+      break;
+    default:
+      if (r < 0.5) structural_quickFade(span, delay);
+      else         structural_fadeScale(span, delay);
+      break;
+  }
+}
+
+function animateTitle(el, delay) {
+  gsap.fromTo(el, { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.75, delay, ease: 'power2.out' });
+}
+
+function animateBadge(el, delay) {
+  gsap.fromTo(el, { opacity: 0 }, { opacity: 0.7, duration: 0.5, delay, ease: 'none' });
+}
+
+function renderAndAnimate(poem, titleEl, badgeEl, poemEl) {
+  applyPalette(poem.palette);
+  nounIndex = 0;
+
+  titleEl.textContent = '';
+  badgeEl.textContent = '';
+  poemEl.innerHTML    = '';
+  gsap.set([titleEl, badgeEl], { opacity: 0 });
+
+  titleEl.textContent = poem.title;
+  badgeEl.textContent = poem.themeLabel;
+
+  const WORD_STAGGER = 0.38;
+  const LINE_PAUSE   = 0.58;
+  let delay = 0;
+
+  animateTitle(titleEl, delay);
+  delay += 0.9;
+
+  animateBadge(badgeEl, delay);
+  delay += 0.7;
+
+  poem.lines.forEach(lineTokens => {
+    const lineEl = document.createElement('div');
+    lineEl.className = 'poem-line';
+    poemEl.appendChild(lineEl);
+
+    lineTokens.forEach(tok => {
+      const span = document.createElement('span');
+      span.className = `word word--${tok.role}`;
+      span.id = tok.id;
+      span.textContent = tok.word;
+      gsap.set(span, { opacity: 0 });
+      lineEl.appendChild(span);
+      lineEl.appendChild(document.createTextNode(' '));
+      animateWord(span, tok.role, delay);
+      delay += WORD_STAGGER;
+    });
+
+    delay += LINE_PAUSE;
+  });
+
+  return delay;
+}
+
+
+/* ================================================================
+   MAIN
+================================================================ */
+
+let currentPoem = null;
+let isAnimating  = false;
+
+const generateBtn = document.getElementById('btn-generate');
+const replayBtn   = document.getElementById('btn-replay');
+const titleEl     = document.getElementById('poem-title');
+const badgeEl     = document.getElementById('theme-badge');
+const poemEl      = document.getElementById('poem-body');
+const introEl     = document.getElementById('intro');
+const legendEl    = document.getElementById('legend');
+
+function handleGenerate() {
+  if (isAnimating) return;
+  isAnimating = true;
+
+  if (introEl && introEl.style.display !== 'none') {
+    gsap.to(introEl, { opacity: 0, y: -8, duration: 0.4,
+      onComplete: () => { introEl.style.display = 'none'; }
+    });
+  }
+
+  if (legendEl && parseFloat(legendEl.style.opacity) === 0) {
+    gsap.to(legendEl, { opacity: 1, duration: 0.8, delay: 0.5 });
+  }
+
+  replayBtn.style.visibility = 'visible';
+  currentPoem = generatePoem();
+
+  const dur = renderAndAnimate(currentPoem, titleEl, badgeEl, poemEl);
+  setTimeout(() => { isAnimating = false; }, (dur * 1000) + 500);
+}
+
+function handleReplay() {
+  if (isAnimating || !currentPoem) return;
+  isAnimating = true;
+  // Replay re-rolls animation variants on the same words —
+  // same poem, different motion, to test whether the motion was
+  // what made it feel meaningful.
+  const dur = renderAndAnimate(currentPoem, titleEl, badgeEl, poemEl);
+  setTimeout(() => { isAnimating = false; }, (dur * 1000) + 500);
+}
+
+generateBtn.addEventListener('click', handleGenerate);
+replayBtn.addEventListener('click', handleReplay);
+</script>
+</body>
+</html>
